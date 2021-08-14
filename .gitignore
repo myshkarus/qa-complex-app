@@ -1,4 +1,8 @@
 .idea/
 __pycache__/
+.pytest_cache
 venv/
 .venv
+/drivers/chromedriver_linux64.zip
+
+
