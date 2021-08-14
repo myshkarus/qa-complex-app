@@ -1,25 +1,7 @@
 """Store tests related to start page"""
 
 # author: Mykhailo Shpilienko, AUTP_G2
-# date:   29-07-2021
-
-# =============================================================================
-# 1. Автоматизировать тест-кейсы которые делали на сегодня (кто не
-#    делал, с вас просто 5 кейсов на стартовую страницу)
-# 2. Создать 5 новых тестов на стартовую страницу или дальнейший функционал.
-#    Итого должен быть файл с 10 тестами. Среди которых обязательно должны быть
-#    тесты на успешную регистрацию и успешный логин.
-#
-#    Нюанс номер 1:
-#    Тест на регистрацию должен проходить больше одного раза, то есть данные в
-#    полях должны быть полностью или частично случайными.
-#
-#    Ньанс номер 2:
-#    Вам нужно самостоятельно придумать проверку по которой мы будем считать
-#    что регистрация успешная. Это может быть проверка на наличие какого-то
-#    поля, сообщения или проверка URL.
-# =============================================================================
-
+# date:   10-08-2021
 
 from time import sleep
 
@@ -42,21 +24,18 @@ class TestLoginPage(BaseTest):
     def driver(self):
 
         # path for Ubuntu:
-        driver = webdriver.Chrome(
-            executable_path=r"./drivers/chromedriver")
+        driver = webdriver.Chrome(executable_path=r"./drivers/chromedriver")
 
         # TODO: let code decide on OS type
         # path for Windows:
-        # driver = webdriver.Chrome(
-        #     executable_path=r"./drivers/chromedriver.exe")
+        # driver = webdriver.Chrome(executable_path=r"./drivers/chromedriver.exe")
         yield driver
         driver.close()
 
     @pytest.fixture(scope='function')
     def random_user(self):
         """Return tuple with random user name, email and password"""
-        user = ''.join(
-            random.choices(string.ascii_lowercase + string.digits, k=12))
+        user = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
         email = f"{user}@yahoo.com"
         pwd = f"{user}{random.randint(0, 1000)}"
         some_user = user, email, pwd
@@ -67,8 +46,7 @@ class TestLoginPage(BaseTest):
     def log_out(self, driver):
         """Log out logged in user"""
         try:
-            logout = driver.find_element_by_xpath(
-                ".//button[contains(text(),'Sign Out')]")
+            logout = driver.find_element_by_xpath(".//button[contains(text(),'Sign Out')]")
             sleep(0.5)
             logout.click()
             sleep(0.5)
@@ -90,23 +68,19 @@ class TestLoginPage(BaseTest):
         self.log.info("Open start page")
 
         # Clear username and password fields
-        username = driver.find_element_by_xpath(
-            ".//input[@placeholder='Username']")
+        username = driver.find_element_by_xpath(".//input[@placeholder='Username']")
         username.clear()
-        password = driver.find_element_by_xpath(
-            ".//input[@placeholder='Password']")
+        password = driver.find_element_by_xpath(".//input[@placeholder='Password']")
         password.clear()
         self.log.info("Fields are cleared")
 
         # Fill in fields <username> and <password>
         username.send_keys(reg_user_name)
         password.send_keys(reg_user_password)
-        self.log.info(
-            "Fields <username>, <password> are filled with values of registered user")
+        self.log.info("Fields <username>, <password> are filled with values of registered user")
 
         # Click on Sign In button
-        sign_in_button = driver.find_element_by_xpath(
-            ".//button[contains(text(), 'Sign In')]")
+        sign_in_button = driver.find_element_by_xpath(".//button[contains(text(), 'Sign In')]")
         sleep(1)
         sign_in_button.click()
         self.log.info("Clicked on 'Sign In'")
@@ -144,12 +118,10 @@ class TestLoginPage(BaseTest):
         username.send_keys(random_user[0])
         email.send_keys(random_user[1])
         password.send_keys(random_user[2])
-        self.log.info(
-            "Fields <username>, <email>, <password> are filled with valid values")
+        self.log.info("Fields <username>, <email>, <password> are filled with valid values")
 
         # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(
-            ".//*[@id='registration-form']/button")
+        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
 
         # без паузы и с очень короткой паузой <1 тест валится
         sleep(1)
@@ -188,12 +160,10 @@ class TestLoginPage(BaseTest):
         username.send_keys(reg_user_name)
         email.send_keys(reg_user_email)
         password.send_keys("1234567890Qwerty")
-        self.log.info(
-            "Fields <username>, <email>, <password> are filled with name and email of registered user")
+        self.log.info("Fields <username>, <email>, <password> are filled with name and email of registered user")
 
         # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(
-            ".//*[@id='registration-form']/button")
+        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
 
         # без паузы и с очень короткой паузой <1 тест валится
         sleep(1)
@@ -202,8 +172,7 @@ class TestLoginPage(BaseTest):
 
         # Verify error message
         sleep(1)
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'username is already taken')]")
+        error_message = driver.find_element_by_xpath(".//div[contains(text(),'username is already taken')]")
         assert error_message.text == "That username is already taken."
         self.log.info("Error message match to expected")
 
@@ -233,12 +202,10 @@ class TestLoginPage(BaseTest):
         username.send_keys(random_user[0])
         email.send_keys(reg_user_email)
         password.send_keys(random_user[2])
-        self.log.info(
-            "Required fields are filled in (<email> is already registered)")
+        self.log.info("Required fields are filled in (<email> is already registered)")
 
         # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(
-            ".//*[@id='registration-form']/button")
+        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
 
         # без паузы и с очень короткой паузой <1 тест валится
         sleep(1)
@@ -247,8 +214,7 @@ class TestLoginPage(BaseTest):
 
         # Verify success registration
         sleep(1)
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'email is already being used')]")
+        error_message = driver.find_element_by_xpath(".//div[contains(text(),'email is already being used')]")
         assert error_message.text == "That email is already being used."
         self.log.info("Error message match to expected")
 
@@ -278,12 +244,10 @@ class TestLoginPage(BaseTest):
         username.send_keys(random_user[0])
         email.send_keys(reg_user_email.replace('@', '_'))
         password.send_keys(random_user[2])
-        self.log.info(
-            "Required fields are filled in (<email> is not valid)")
+        self.log.info("Required fields are filled in (<email> is not valid)")
 
         # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(
-            ".//*[@id='registration-form']/button")
+        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
 
         # без паузы и с очень короткой паузой <1 тест валится
         sleep(1)
@@ -322,12 +286,10 @@ class TestLoginPage(BaseTest):
         username.send_keys(random_user[0][:2])
         email.send_keys(random_user[1])
         password.send_keys(random_user[2])
-        self.log.info(
-            "Required fields are filled in (<name> is less than 3 symbols)")
+        self.log.info("Required fields are filled in (<name> is less than 3 symbols)")
 
         # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(
-            ".//*[@id='registration-form']/button")
+        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
 
         # без паузы и с очень короткой паузой <1 тест валится
         sleep(1)
@@ -366,12 +328,10 @@ class TestLoginPage(BaseTest):
         username.send_keys("Zlatan Ibrahimović")
         email.send_keys(random_user[1])
         password.send_keys(random_user[2])
-        self.log.info(
-            "Required fields are filled in (<name> contains non ascii symbols)")
+        self.log.info("Required fields are filled in (<name> contains non ascii symbols)")
 
         # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(
-            ".//*[@id='registration-form']/button")
+        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
 
         # без паузы и с очень короткой паузой <1 тест валится
         sleep(1)
@@ -410,12 +370,10 @@ class TestLoginPage(BaseTest):
         username.send_keys(random_user[0])
         email.send_keys(random_user[1])
         password.send_keys(random_user[2][:11])
-        self.log.info(
-            "Required fields are filled in (<password> is less than 12 symbols)")
+        self.log.info("Required fields are filled in (<password> is less than 12 symbols)")
 
         # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(
-            ".//*[@id='registration-form']/button")
+        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
 
         # без паузы и с очень короткой паузой <1 тест валится
         sleep(1)
@@ -453,13 +411,11 @@ class TestLoginPage(BaseTest):
         # Fill in registration fields
         username.send_keys(random_user[0])
         email.send_keys(random_user[1])
-        password.send_keys(random_user[2]*5)
-        self.log.info(
-            "Required fields are filled in (<password> is longer than 50 symbols)")
+        password.send_keys(random_user[2] * 5)
+        self.log.info("Required fields are filled in (<password> is longer than 50 symbols)")
 
         # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(
-            ".//*[@id='registration-form']/button")
+        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
 
         # без паузы и с очень короткой паузой <1 тест валится
         sleep(1)
@@ -468,8 +424,7 @@ class TestLoginPage(BaseTest):
 
         # Verify error message
         sleep(1)
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'Password cannot exceed 50 characters')]")
+        error_message = driver.find_element_by_xpath(".//div[contains(text(),'Password cannot exceed 50 characters')]")
         assert error_message.text == "Password cannot exceed 50 characters"
         self.log.info("Error message match to expected")
 
@@ -495,15 +450,13 @@ class TestLoginPage(BaseTest):
         self.log.info("Fields <username>, <email>, <password> are cleared")
 
         # Fill in registration fields
-        username.send_keys(random_user[0]*3)
+        username.send_keys(random_user[0] * 3)
         email.send_keys(random_user[1])
         password.send_keys(random_user[2])
-        self.log.info(
-            "Required fields are filled in (<name> is more than 30 symbols)")
+        self.log.info("Required fields are filled in (<name> is more than 30 symbols)")
 
         # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(
-            ".//*[@id='registration-form']/button")
+        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
 
         # без паузы и с очень короткой паузой <1 тест валится
         sleep(1)
@@ -512,8 +465,7 @@ class TestLoginPage(BaseTest):
 
         # Verify error message
         sleep(1)
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'Username cannot exceed 30 characters.')]")
+        error_message = driver.find_element_by_xpath(".//div[contains(text(),'Username cannot exceed 30 characters.')]")
         assert error_message.text == "Username cannot exceed 30 characters."
         self.log.info("Error message match to expected")
 
@@ -531,23 +483,19 @@ class TestLoginPage(BaseTest):
         self.log.info("Open page")
 
         # Clear required fields
-        username = driver.find_element_by_xpath(
-            ".//input[@placeholder='Username']")
+        username = driver.find_element_by_xpath(".//input[@placeholder='Username']")
         username.clear()
-        password = driver.find_element_by_xpath(
-            ".//input[@placeholder='Password']")
+        password = driver.find_element_by_xpath(".//input[@placeholder='Password']")
         password.clear()
         self.log.info("Fields are cleared")
 
         # Click on Sign In button
-        sign_in_button = driver.find_element_by_xpath(
-            ".//button[contains(text(), 'Sign In')]")
+        sign_in_button = driver.find_element_by_xpath(".//button[contains(text(), 'Sign In')]")
         sign_in_button.click()
         self.log.info("Clicked on 'Sign In'")
 
         # Verify error message
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'Invalid username / password')]")
+        error_message = driver.find_element_by_xpath(".//div[contains(text(),'Invalid username / password')]")
         assert error_message.text == 'Invalid username / password'
         self.log.info("Error message match to expected")
 
@@ -566,25 +514,21 @@ class TestLoginPage(BaseTest):
         self.log.info("Open page")
 
         # Clear required fields and fill in
-        username = driver.find_element_by_xpath(
-            ".//input[@placeholder='Username']")
+        username = driver.find_element_by_xpath(".//input[@placeholder='Username']")
         username.clear()
         username.send_keys('TestUser')
-        password = driver.find_element_by_xpath(
-            ".//input[@placeholder='Password']")
+        password = driver.find_element_by_xpath(".//input[@placeholder='Password']")
         password.clear()
         password.send_keys('~123Abcd')
         sleep(1)
         self.log.info("Fields are filled in with invalid values")
 
         # Click on Sign In button
-        sign_in_button = driver.find_element_by_xpath(
-            ".//button[contains(text(), 'Sign In')]")
+        sign_in_button = driver.find_element_by_xpath(".//button[contains(text(), 'Sign In')]")
         sign_in_button.click()
         self.log.info("Clicked on 'Sign In'")
 
         # Verify error message
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'Invalid username / password')]")
+        error_message = driver.find_element_by_xpath(".//div[contains(text(),'Invalid username / password')]")
         assert error_message.text == 'Invalid username / password'
         self.log.info("Error message match to expected")
