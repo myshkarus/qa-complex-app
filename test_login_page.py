@@ -17,6 +17,8 @@ reg_user_name = 'aryastark'
 reg_user_password = '20210727Abcd'
 reg_user_email = 'aryastark20210727@yahoo.com'
 
+n = 0
+
 
 class TestLoginPage(BaseTest):
 
@@ -53,8 +55,7 @@ class TestLoginPage(BaseTest):
         except common.exceptions.NoSuchElementException:
             pass
 
-    # username - кириллица не работает
-
+    @pytest.mark.skip()
     def test_successful_login(self, driver, log_out):
         """
         - Open start page
@@ -91,6 +92,7 @@ class TestLoginPage(BaseTest):
         assert reg_user_name in hello_message.text
         self.log.info("Registered user logged in successfully")
 
+    @pytest.mark.skip()
     def test_successful_registration(self, driver, random_user, log_out):
         """
         - Open start page
@@ -134,6 +136,7 @@ class TestLoginPage(BaseTest):
         assert random_user[0] in hello_message.text
         self.log.info("Random user registered successfully")
 
+    @pytest.mark.skip()
     def test_existing_user_reregistration(self, driver, log_out):
         """
         - Open start page
@@ -176,6 +179,7 @@ class TestLoginPage(BaseTest):
         assert error_message.text == "That username is already taken."
         self.log.info("Error message match to expected")
 
+    @pytest.mark.skip()
     def test_existing_email(self, driver, random_user, log_out):
         """
         - Open start page
@@ -218,6 +222,7 @@ class TestLoginPage(BaseTest):
         assert error_message.text == "That email is already being used."
         self.log.info("Error message match to expected")
 
+    @pytest.mark.skip()
     def test_not_valid_email(self, driver, random_user, log_out):
         """
         - Open start page
@@ -261,6 +266,95 @@ class TestLoginPage(BaseTest):
         assert error_message.text == "You must provide a valid email address."
         self.log.info("Error message match to expected")
 
+    def test_email_prefix_exceed_max_length(self, driver, random_user, log_out):
+        """
+        - Open start page
+        - Clear username, email and password fields in registration form
+        - Fill in registration fields with random user name and email address with email prefix > 64 symbols
+        - Click on Sign Up button
+        - Verify error message
+        """
+
+        # Open start page
+        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        self.log.info("Open start page")
+
+        # Clear fields
+        username = driver.find_element_by_id("username-register")
+        email = driver.find_element_by_id("email-register")
+        password = driver.find_element_by_id("password-register")
+        username.clear()
+        email.clear()
+        password.clear()
+        self.log.info("Fields <username>, <email>, <password> are cleared")
+
+        # Fill in registration fields
+        username.send_keys(random_user[0])
+        # email prefix should be > 64 symbols to pass test
+        email.send_keys(f"{random_user[0]:0<65}@yahoo.com")
+        password.send_keys(random_user[2])
+        self.log.info("Email prefix in email address exceeds max possible length")
+
+        # Click on Sign Up button
+        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
+
+        # без паузы и с очень короткой паузой <1 тест валится
+        sleep(1)
+        sign_up_button.click()
+        self.log.info("Clicked on 'Sign Up' button")
+
+        # Verify error message
+        sleep(1)
+        error_message = driver.find_element_by_xpath(
+            ".//div[contains(text(),'You must provide a avalid email address.')]")
+        assert error_message.text == "You must provide a avalid email address."
+        self.log.info("Error message match to expected")
+
+    def test_email_domain_exceed_max_length(self, driver, random_user, log_out):
+        """
+        - Open start page
+        - Clear username, email and password fields in registration form
+        - Fill in registration fields with random user name and email address with @domain > 64 symbols
+        - Click on Sign Up button
+        - Verify error message
+        """
+
+        # Open start page
+        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        self.log.info("Open start page")
+
+        # Clear fields
+        username = driver.find_element_by_id("username-register")
+        email = driver.find_element_by_id("email-register")
+        password = driver.find_element_by_id("password-register")
+        username.clear()
+        email.clear()
+        password.clear()
+        self.log.info("Fields <username>, <email>, <password> are cleared")
+
+        # Fill in registration fields
+        username.send_keys(random_user[0])
+        # @ and email domain together should be > 64 symbols to pass test
+        email.send_keys(f"{random_user[0]}@{random_user[0]:0<64}.com")
+        password.send_keys(random_user[2])
+        self.log.info("Domain in email address exceeds max possible length")
+
+        # Click on Sign Up button
+        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
+
+        # без паузы и с очень короткой паузой <1 тест валится
+        sleep(1)
+        sign_up_button.click()
+        self.log.info("Clicked on 'Sign Up' button")
+
+        # Verify error message
+        sleep(1)
+        error_message = driver.find_element_by_xpath(
+            ".//div[contains(text(),'You must provide a avalid email address.')]")
+        assert error_message.text == "You must provide a avalid email address."
+        self.log.info("Error message match to expected")
+
+    @pytest.mark.skip()
     def test_short_user_name(self, driver, random_user, log_out):
         """
          - Open start page
@@ -303,6 +397,7 @@ class TestLoginPage(BaseTest):
         assert error_message.text == "Username must be at least 3 characters."
         self.log.info("Error message match to expected")
 
+    @pytest.mark.skip()
     def test_user_name_invalid_char(self, driver, random_user, log_out):
         """
          - Open start page
@@ -345,6 +440,7 @@ class TestLoginPage(BaseTest):
         assert error_message.text == "Username can only contain letters and numbers."
         self.log.info("Error message match to expected")
 
+    @pytest.mark.skip()
     def test_short_password(self, driver, random_user, log_out):
         """
          - Open start page
@@ -387,6 +483,7 @@ class TestLoginPage(BaseTest):
         assert error_message.text == "Password must be at least 12 characters."
         self.log.info("Error message match to expected")
 
+    @pytest.mark.skip()
     def test_long_password(self, driver, random_user, log_out):
         """
          - Open start page
@@ -428,6 +525,7 @@ class TestLoginPage(BaseTest):
         assert error_message.text == "Password cannot exceed 50 characters"
         self.log.info("Error message match to expected")
 
+    @pytest.mark.skip()
     def test_long_user_name(self, driver, random_user, log_out):
         """
          - Open start page
@@ -469,7 +567,7 @@ class TestLoginPage(BaseTest):
         assert error_message.text == "Username cannot exceed 30 characters."
         self.log.info("Error message match to expected")
 
-    @pytest.mark.skip(reason="=====> test from lesson 29-07-2021 <=====")
+    @pytest.mark.skip()
     def test_empty_fields_login(self, driver, log_out):
         """
         - Open start page
@@ -499,7 +597,7 @@ class TestLoginPage(BaseTest):
         assert error_message.text == 'Invalid username / password'
         self.log.info("Error message match to expected")
 
-    @pytest.mark.skip(reason="=====> test from lesson 29-07-2021 <=====")
+    @pytest.mark.skip()
     def test_invalid_login(self, driver, log_out):
         """
         - Open start page
