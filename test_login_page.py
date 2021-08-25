@@ -1,229 +1,198 @@
 """Store tests related to start page"""
 
 # author: Mykhailo Shpilienko, AUTP_G2
-# date:   10-08-2021
+# date:   12-08-2021
 
 from time import sleep
 
 import pytest
 from selenium import webdriver
-from selenium import common
 
 from conftest import BaseTest
-import random
-import string
-
-reg_user_name = 'aryastark'
-reg_user_password = '20210727Abcd'
-reg_user_email = 'aryastark20210727@yahoo.com'
-
-n = 0
+from constants.base import BaseConstants
+from constants.login_page import LoginPageConstants
+from constants.profile_page import ProfilePageConstants
+from helpers.base import BaseHelpers
+from helpers.login_page import LoginHelpers
+from helpers.profile_page import ProfileHelpers
 
 
 class TestLoginPage(BaseTest):
 
     @pytest.fixture(scope='class')
     def driver(self):
-
-        # path for Ubuntu:
-        driver = webdriver.Chrome(executable_path=r"./drivers/chromedriver")
-
-        # TODO: let code decide on OS type
-        # path for Windows:
-        # driver = webdriver.Chrome(executable_path=r"./drivers/chromedriver.exe")
+        driver = webdriver.Chrome(executable_path=BaseConstants.DRIVER_PATH)
         yield driver
         driver.close()
 
     @pytest.fixture(scope='function')
-    def random_user(self):
-        """Return tuple with random user name, email and password"""
-        user = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
-        email = f"{user}@yahoo.com"
-        pwd = f"{user}{random.randint(0, 1000)}"
-        some_user = user, email, pwd
-        yield some_user
-        del some_user
+    def log_out(self, driver):
+        """Log out the user"""
+        yield
+        base_helper = BaseHelpers(driver)
+        base_helper.find_by_contains_text(ProfilePageConstants.SIGN_OUT_BUTTON_TEXT, "button").click()
+        sleep(1)
 
     @pytest.fixture(scope='function')
-    def log_out(self, driver):
-        """Log out logged in user"""
-        try:
-            logout = driver.find_element_by_xpath(".//button[contains(text(),'Sign Out')]")
-            sleep(0.5)
-            logout.click()
-            sleep(0.5)
-        except common.exceptions.NoSuchElementException:
-            pass
+    def register(self, driver):
+        login_helper = LoginHelpers(driver)
+        registered_user = login_helper.register_user(username=self.variety.user, email=self.variety.email,
+                                                     password=self.variety.password)
+        login_helper.find_by_contains_text(ProfilePageConstants.SIGN_OUT_BUTTON_TEXT, "button").click()
+        sleep(1)
+        return registered_user
 
-    @pytest.mark.skip()
     def test_successful_login(self, driver, log_out):
         """
         - Open start page
-        - Clear username and password fields
-        - Fill in fields <username> and <password>
-        - Click on Sign In button
-        - Verify login is successful
+        - Fill in fields <username> and <password> and click on Sign In button
+        - Verify that login is successful
         """
         # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        driver.get(BaseConstants.START_PAGE_URL)
         self.log.info("Open start page")
 
-        # Clear username and password fields
-        username = driver.find_element_by_xpath(".//input[@placeholder='Username']")
-        username.clear()
-        password = driver.find_element_by_xpath(".//input[@placeholder='Password']")
-        password.clear()
-        self.log.info("Fields are cleared")
-
-        # Fill in fields <username> and <password>
-        username.send_keys(reg_user_name)
-        password.send_keys(reg_user_password)
-        self.log.info("Fields <username>, <password> are filled with values of registered user")
-
-        # Click on Sign In button
-        sign_in_button = driver.find_element_by_xpath(".//button[contains(text(), 'Sign In')]")
-        sleep(1)
-        sign_in_button.click()
-        self.log.info("Clicked on 'Sign In'")
+        # Fill in username and password fields and click on Sign In button
+        login_helper = LoginHelpers(driver)
+        login_helper.login(username=LoginPageConstants.REGISTERED_USERNAME,
+                           password=LoginPageConstants.REGISTERED_PASSWORD)
+        self.log.info("Fill in required fields and button Sign In is pressed")
 
         # Verify successful login
-        sleep(5)
-        hello_message = driver.find_element_by_tag_name('h2')
-        assert reg_user_name in hello_message.text
+        # sleep(3)
+        profile_helper = ProfileHelpers(driver)
+        profile_helper.verify_hello_message(LoginPageConstants.REGISTERED_USERNAME)
         self.log.info("Registered user logged in successfully")
 
-    @pytest.mark.skip()
-    def test_successful_registration(self, driver, random_user, log_out):
+    def test_successful_registration(self, driver, log_out):
         """
         - Open start page
-        - Clear username, email and password fields in registration form
-        - Fill in registration fields with random valid values
-        - Click on Sign Up button
+        - Fill in registration fields with random valid values and click on Sign Up button
         - Verify success registration
-        Note: this test should allow to be executed multiple times
         """
-
         # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        driver.get(BaseConstants.START_PAGE_URL)
         self.log.info("Open start page")
 
-        # Clear fields
-        username = driver.find_element_by_id("username-register")
-        email = driver.find_element_by_id("email-register")
-        password = driver.find_element_by_id("password-register")
-        username.clear()
-        email.clear()
-        password.clear()
-        self.log.info("Fields <username>, <email>, <password> are cleared")
-
-        # Fill in registration fields
-        username.send_keys(random_user[0])
-        email.send_keys(random_user[1])
-        password.send_keys(random_user[2])
-        self.log.info("Fields <username>, <email>, <password> are filled with valid values")
-
-        # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
-
-        # без паузы и с очень короткой паузой <1 тест валится
-        sleep(1)
-        sign_up_button.click()
-        self.log.info("Clicked on 'Sign Up' button")
+        # Fill in registration field with random username, email and password and click on Sign Up button
+        login_helper = LoginHelpers(driver)
+        user, _, _ = login_helper.register_user(username=self.variety.user, email=self.variety.email,
+                                                password=self.variety.password)
+        self.log.info("New user is registered")
 
         # Verify success registration
-        sleep(1)
-        hello_message = driver.find_element_by_tag_name('h2')
-        assert random_user[0] in hello_message.text
+        # sleep(1)
+        profile_helper = ProfileHelpers(driver)
+        profile_helper.verify_hello_message(user)
         self.log.info("Random user registered successfully")
 
-    @pytest.mark.skip()
-    def test_existing_user_reregistration(self, driver, log_out):
+    def test_existing_user_reregistration(self, driver):
         """
         - Open start page
-        - Clear username, email and password fields in registration form
         - Fill in registration fields with existing user data
         - Click on Sign Up button
         - Verify error message
         """
-
         # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        driver.get(BaseConstants.START_PAGE_URL)
         self.log.info("Open start page")
 
-        # Clear fields
-        username = driver.find_element_by_id("username-register")
-        email = driver.find_element_by_id("email-register")
-        password = driver.find_element_by_id("password-register")
-        username.clear()
-        email.clear()
-        password.clear()
-        self.log.info("Fields <username>, <email>, <password> are cleared")
-
-        # Fill in registration fields
-        username.send_keys(reg_user_name)
-        email.send_keys(reg_user_email)
-        password.send_keys("1234567890Qwerty")
-        self.log.info("Fields <username>, <email>, <password> are filled with name and email of registered user")
-
-        # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
-
-        # без паузы и с очень короткой паузой <1 тест валится
-        sleep(1)
-        sign_up_button.click()
-        self.log.info("Clicked on 'Sign Up' button")
+        # Fill in registration field with existing username, email and password and click on Sign Up button
+        login_helper = LoginHelpers(driver)
+        login_helper.register_user(username=LoginPageConstants.REGISTERED_USERNAME,
+                                   email=LoginPageConstants.REGISTERED_EMAIL,
+                                   password=LoginPageConstants.REGISTERED_PASSWORD)
+        self.log.info("Existing user registers")
 
         # Verify error message
-        sleep(1)
-        error_message = driver.find_element_by_xpath(".//div[contains(text(),'username is already taken')]")
-        assert error_message.text == "That username is already taken."
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_USERNAME_EXISTS)
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_EMAIL_EXISTS)
         self.log.info("Error message match to expected")
 
-    @pytest.mark.skip()
-    def test_existing_email(self, driver, random_user, log_out):
+    def test_short_user_name(self, driver):
+        """
+         - Open start page
+         - Fill in registration form with user data and name less than 3 symbols
+         - Click on Sign Up button
+         - Verify error message
+         """
+        # Open start page
+        driver.get(BaseConstants.START_PAGE_URL)
+        self.log.info("Open start page")
+
+        # Fill in registration fields
+        login_helper = LoginHelpers(driver)
+        login_helper.register_user(username=self.variety.user[:2], email=self.variety.email,
+                                   password=self.variety.password)
+        self.log.info("Required fields are filled in (<name> is less than 3 symbols)")
+
+        # Verify error message
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_USERNAME_MIN_LENGTH)
+        self.log.info("Error message match to expected")
+
+    def test_long_user_name(self, driver):
+        """
+         - Open start page
+         - Fill in registration form with user data and name more than 30 symbols
+         - Click on Sign Up button
+         - Verify error message
+         """
+        # Open start page
+        driver.get(BaseConstants.START_PAGE_URL)
+        self.log.info("Open start page")
+
+        # Fill in registration fields
+        login_helper = LoginHelpers(driver)
+        login_helper.register_user(username=self.variety.user * 3, email=self.variety.email,
+                                   password=self.variety.password)
+        self.log.info("Required fields are filled in (<name> is more than 30 symbols)")
+
+        # Verify error message
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_USERNAME_MAX_LENGTH)
+        self.log.info("Error message match to expected")
+
+    def test_user_name_invalid_char(self, driver):
+        """
+         - Open start page
+         - Fill in registration form with user data and name with non ascii symbols
+         - Click on Sign Up button
+         - Verify error message
+         """
+        # Open start page
+        driver.get(BaseConstants.START_PAGE_URL)
+        self.log.info("Open start page")
+
+        # Fill in registration fields
+        login_helper = LoginHelpers(driver)
+        login_helper.register_user(username=LoginPageConstants.NON_ASCII_USERNAME, email=self.variety.email,
+                                   password=self.variety.password)
+
+        # Verify error message
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_USERNAME_ALLOWED_SYMBOLS)
+        self.log.info("Error message match to expected")
+
+    def test_existing_email(self, driver):
         """
         - Open start page
-        - Clear username, email and password fields in registration form
-        - Fill in registration fields with random user name and registered email
+        - Fill in registration fields with new user name and existing email
         - Click on Sign Up button
         - Verify error message
         """
-
         # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        driver.get(BaseConstants.START_PAGE_URL)
         self.log.info("Open start page")
 
-        # Clear fields
-        username = driver.find_element_by_id("username-register")
-        email = driver.find_element_by_id("email-register")
-        password = driver.find_element_by_id("password-register")
-        username.clear()
-        email.clear()
-        password.clear()
-        self.log.info("Fields <username>, <email>, <password> are cleared")
+        # Fill in registration field with random username and existing email and click on Sign U
+        login_helper = LoginHelpers(driver)
+        login_helper.register_user(username=self.variety.user, email=LoginPageConstants.REGISTERED_EMAIL,
+                                   password=self.variety.password)
+        self.log.info("Existing email is used to register new user")
 
-        # Fill in registration fields
-        username.send_keys(random_user[0])
-        email.send_keys(reg_user_email)
-        password.send_keys(random_user[2])
-        self.log.info("Required fields are filled in (<email> is already registered)")
-
-        # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
-
-        # без паузы и с очень короткой паузой <1 тест валится
-        sleep(1)
-        sign_up_button.click()
-        self.log.info("Clicked on 'Sign Up' button")
-
-        # Verify success registration
-        sleep(1)
-        error_message = driver.find_element_by_xpath(".//div[contains(text(),'email is already being used')]")
-        assert error_message.text == "That email is already being used."
+        # Verify error message
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_EMAIL_EXISTS)
         self.log.info("Error message match to expected")
 
-    @pytest.mark.skip()
-    def test_not_valid_email(self, driver, random_user, log_out):
+    def test_not_valid_email(self, driver):
         """
         - Open start page
         - Clear username, email and password fields in registration form
@@ -231,402 +200,144 @@ class TestLoginPage(BaseTest):
         - Click on Sign Up button
         - Verify error message
         """
-
         # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        driver.get(BaseConstants.START_PAGE_URL)
         self.log.info("Open start page")
 
-        # Clear fields
-        username = driver.find_element_by_id("username-register")
-        email = driver.find_element_by_id("email-register")
-        password = driver.find_element_by_id("password-register")
-        username.clear()
-        email.clear()
-        password.clear()
-        self.log.info("Fields <username>, <email>, <password> are cleared")
-
-        # Fill in registration fields
-        username.send_keys(random_user[0])
-        email.send_keys(reg_user_email.replace('@', '_'))
-        password.send_keys(random_user[2])
-        self.log.info("Required fields are filled in (<email> is not valid)")
-
-        # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
-
-        # без паузы и с очень короткой паузой <1 тест валится
-        sleep(1)
-        sign_up_button.click()
-        self.log.info("Clicked on 'Sign Up' button")
+        # Fill in registration field with random username and existing email and click on Sign U
+        login_helper = LoginHelpers(driver)
+        login_helper.register_user(username=self.variety.user,
+                                   email=LoginPageConstants.REGISTERED_EMAIL.replace('@', '_'),
+                                   password=self.variety.password)
+        self.log.info("Invalid email is used to register new user")
 
         # Verify error message
-        sleep(1)
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'You must provide a valid email address.')]")
-        assert error_message.text == "You must provide a valid email address."
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_INVALID_EMAIL)
         self.log.info("Error message match to expected")
 
-    def test_email_prefix_exceed_max_length(self, driver, random_user, log_out):
+    def test_email_prefix_exceed_max_length(self, driver):
         """
         - Open start page
-        - Clear username, email and password fields in registration form
         - Fill in registration fields with random user name and email address with email prefix > 64 symbols
         - Click on Sign Up button
         - Verify error message
         """
-
         # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        driver.get(BaseConstants.START_PAGE_URL)
         self.log.info("Open start page")
 
-        # Clear fields
-        username = driver.find_element_by_id("username-register")
-        email = driver.find_element_by_id("email-register")
-        password = driver.find_element_by_id("password-register")
-        username.clear()
-        email.clear()
-        password.clear()
-        self.log.info("Fields <username>, <email>, <password> are cleared")
-
-        # Fill in registration fields
-        username.send_keys(random_user[0])
+        # Fill in registration field with random username and existing email and click on Sign U
+        login_helper = LoginHelpers(driver)
         # email prefix should be > 64 symbols to pass test
-        email.send_keys(f"{random_user[0]:0<65}@yahoo.com")
-        password.send_keys(random_user[2])
+        login_helper.register_user(username=self.variety.user,
+                                   email=f"{self.variety.email.split('@')[0]:z>65}@{self.variety.email.split('@')[1]}",
+                                   password=self.variety.password)
         self.log.info("Email prefix in email address exceeds max possible length")
 
-        # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
-
-        # без паузы и с очень короткой паузой <1 тест валится
-        sleep(1)
-        sign_up_button.click()
-        self.log.info("Clicked on 'Sign Up' button")
-
         # Verify error message
-        sleep(1)
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'You must provide a avalid email address.')]")
-        assert error_message.text == "You must provide a avalid email address."
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_INVALID_EMAIL_LENGTH)
         self.log.info("Error message match to expected")
 
-    def test_email_domain_exceed_max_length(self, driver, random_user, log_out):
+    def test_email_domain_exceed_max_length(self, driver):
         """
         - Open start page
-        - Clear username, email and password fields in registration form
         - Fill in registration fields with random user name and email address with @domain > 64 symbols
         - Click on Sign Up button
         - Verify error message
         """
-
         # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        driver.get(BaseConstants.START_PAGE_URL)
         self.log.info("Open start page")
 
-        # Clear fields
-        username = driver.find_element_by_id("username-register")
-        email = driver.find_element_by_id("email-register")
-        password = driver.find_element_by_id("password-register")
-        username.clear()
-        email.clear()
-        password.clear()
-        self.log.info("Fields <username>, <email>, <password> are cleared")
-
         # Fill in registration fields
-        username.send_keys(random_user[0])
+        login_helper = LoginHelpers(driver)
         # @ and email domain together should be > 64 symbols to pass test
-        email.send_keys(f"{random_user[0]}@{random_user[0]:0<64}.com")
-        password.send_keys(random_user[2])
+        login_helper.register_user(username=self.variety.user,
+                                   email=f"{self.variety.email.split('@')[0]}@{self.variety.email.split('@')[1]:z>68}",
+                                   password=self.variety.password)
         self.log.info("Domain in email address exceeds max possible length")
 
-        # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
-
-        # без паузы и с очень короткой паузой <1 тест валится
-        sleep(1)
-        sign_up_button.click()
-        self.log.info("Clicked on 'Sign Up' button")
-
         # Verify error message
-        sleep(1)
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'You must provide a avalid email address.')]")
-        assert error_message.text == "You must provide a avalid email address."
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_INVALID_EMAIL_LENGTH)
         self.log.info("Error message match to expected")
 
-    @pytest.mark.skip()
-    def test_short_user_name(self, driver, random_user, log_out):
+    def test_short_password(self, driver):
         """
          - Open start page
-         - Clear username, email and password fields in registration form
-         - Fill in registration form with user data and name less than 3 symbols
-         - Click on Sign Up button
-         - Verify error message
-         """
-        # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
-        self.log.info("Open start page")
-
-        # Clear fields
-        username = driver.find_element_by_id("username-register")
-        email = driver.find_element_by_id("email-register")
-        password = driver.find_element_by_id("password-register")
-        username.clear()
-        email.clear()
-        password.clear()
-        self.log.info("Fields <username>, <email>, <password> are cleared")
-
-        # Fill in registration fields
-        username.send_keys(random_user[0][:2])
-        email.send_keys(random_user[1])
-        password.send_keys(random_user[2])
-        self.log.info("Required fields are filled in (<name> is less than 3 symbols)")
-
-        # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
-
-        # без паузы и с очень короткой паузой <1 тест валится
-        sleep(1)
-        sign_up_button.click()
-        self.log.info("Clicked on 'Sign Up' button")
-
-        # Verify error message
-        sleep(1)
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'Username must be at least 3 characters.')]")
-        assert error_message.text == "Username must be at least 3 characters."
-        self.log.info("Error message match to expected")
-
-    @pytest.mark.skip()
-    def test_user_name_invalid_char(self, driver, random_user, log_out):
-        """
-         - Open start page
-         - Clear username, email and password fields in registration form
-         - Fill in registration form with user data and name with non ascii symbols
-         - Click on Sign Up button
-         - Verify error message
-         """
-        # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
-        self.log.info("Open start page")
-
-        # Clear fields
-        username = driver.find_element_by_id("username-register")
-        email = driver.find_element_by_id("email-register")
-        password = driver.find_element_by_id("password-register")
-        username.clear()
-        email.clear()
-        password.clear()
-        self.log.info("Fields <username>, <email>, <password> are cleared")
-
-        # Fill in registration fields
-        username.send_keys("Zlatan Ibrahimović")
-        email.send_keys(random_user[1])
-        password.send_keys(random_user[2])
-        self.log.info("Required fields are filled in (<name> contains non ascii symbols)")
-
-        # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
-
-        # без паузы и с очень короткой паузой <1 тест валится
-        sleep(1)
-        sign_up_button.click()
-        self.log.info("Clicked on 'Sign Up' button")
-
-        # Verify error message
-        sleep(1)
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'Username can only contain letters and numbers.')]")
-        assert error_message.text == "Username can only contain letters and numbers."
-        self.log.info("Error message match to expected")
-
-    @pytest.mark.skip()
-    def test_short_password(self, driver, random_user, log_out):
-        """
-         - Open start page
-         - Clear username, email and password fields in registration form
          - Fill in registration form with user data and password less than 12 symbols
          - Click on Sign Up button
          - Verify error message
          """
         # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        driver.get(BaseConstants.START_PAGE_URL)
         self.log.info("Open start page")
 
-        # Clear fields
-        username = driver.find_element_by_id("username-register")
-        email = driver.find_element_by_id("email-register")
-        password = driver.find_element_by_id("password-register")
-        username.clear()
-        email.clear()
-        password.clear()
-        self.log.info("Fields <username>, <email>, <password> are cleared")
-
         # Fill in registration fields
-        username.send_keys(random_user[0])
-        email.send_keys(random_user[1])
-        password.send_keys(random_user[2][:11])
+        login_helper = LoginHelpers(driver)
+        login_helper.register_user(username=self.variety.user, email=self.variety.email,
+                                   password=self.variety.password[:11])
         self.log.info("Required fields are filled in (<password> is less than 12 symbols)")
 
-        # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
-
-        # без паузы и с очень короткой паузой <1 тест валится
-        sleep(1)
-        sign_up_button.click()
-        self.log.info("Clicked on 'Sign Up' button")
-
         # Verify error message
-        sleep(1)
-        error_message = driver.find_element_by_xpath(
-            ".//div[contains(text(),'Password must be at least 12 characters.')]")
-        assert error_message.text == "Password must be at least 12 characters."
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_PASSWORD_MIN_LENGTH)
         self.log.info("Error message match to expected")
 
-    @pytest.mark.skip()
-    def test_long_password(self, driver, random_user, log_out):
+    def test_long_password(self, driver):
         """
          - Open start page
-         - Clear username, email and password fields in registration form
          - Fill in registration form with user data and password more than 50 symbols
          - Click on Sign Up button
          - Verify error message
          """
         # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        driver.get(BaseConstants.START_PAGE_URL)
         self.log.info("Open start page")
 
-        # Clear fields
-        username = driver.find_element_by_id("username-register")
-        email = driver.find_element_by_id("email-register")
-        password = driver.find_element_by_id("password-register")
-        username.clear()
-        email.clear()
-        password.clear()
-        self.log.info("Fields <username>, <email>, <password> are cleared")
-
         # Fill in registration fields
-        username.send_keys(random_user[0])
-        email.send_keys(random_user[1])
-        password.send_keys(random_user[2] * 5)
+        login_helper = LoginHelpers(driver)
+        login_helper.register_user(username=self.variety.user, email=self.variety.email,
+                                   password=self.variety.password * 5)
         self.log.info("Required fields are filled in (<password> is longer than 50 symbols)")
 
-        # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
-
-        # без паузы и с очень короткой паузой <1 тест валится
-        sleep(1)
-        sign_up_button.click()
-        self.log.info("Clicked on 'Sign Up' button")
-
         # Verify error message
-        sleep(1)
-        error_message = driver.find_element_by_xpath(".//div[contains(text(),'Password cannot exceed 50 characters')]")
-        assert error_message.text == "Password cannot exceed 50 characters"
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_PASSWORD_MAX_LENGTH)
         self.log.info("Error message match to expected")
 
-    @pytest.mark.skip()
-    def test_long_user_name(self, driver, random_user, log_out):
-        """
-         - Open start page
-         - Clear username, email and password fields in registration form
-         - Fill in registration form with user data and name more than 30 symbols
-         - Click on Sign Up button
-         - Verify error message
-         """
-        # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
-        self.log.info("Open start page")
-
-        # Clear fields
-        username = driver.find_element_by_id("username-register")
-        email = driver.find_element_by_id("email-register")
-        password = driver.find_element_by_id("password-register")
-        username.clear()
-        email.clear()
-        password.clear()
-        self.log.info("Fields <username>, <email>, <password> are cleared")
-
-        # Fill in registration fields
-        username.send_keys(random_user[0] * 3)
-        email.send_keys(random_user[1])
-        password.send_keys(random_user[2])
-        self.log.info("Required fields are filled in (<name> is more than 30 symbols)")
-
-        # Click on Sign Up button
-        sign_up_button = driver.find_element_by_xpath(".//*[@id='registration-form']/button")
-
-        # без паузы и с очень короткой паузой <1 тест валится
-        sleep(1)
-        sign_up_button.click()
-        self.log.info("Clicked on 'Sign Up' button")
-
-        # Verify error message
-        sleep(1)
-        error_message = driver.find_element_by_xpath(".//div[contains(text(),'Username cannot exceed 30 characters.')]")
-        assert error_message.text == "Username cannot exceed 30 characters."
-        self.log.info("Error message match to expected")
-
-    @pytest.mark.skip()
-    def test_empty_fields_login(self, driver, log_out):
+    def test_empty_fields_login(self, driver):
         """
         - Open start page
-        - Clear password and login fields
+        - Clear name and password fields
         - Click on Sign In button
         - Verify error message
         """
-
         # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        driver.get(BaseConstants.START_PAGE_URL)
         self.log.info("Open page")
 
-        # Clear required fields
-        username = driver.find_element_by_xpath(".//input[@placeholder='Username']")
-        username.clear()
-        password = driver.find_element_by_xpath(".//input[@placeholder='Password']")
-        password.clear()
-        self.log.info("Fields are cleared")
-
-        # Click on Sign In button
-        sign_in_button = driver.find_element_by_xpath(".//button[contains(text(), 'Sign In')]")
-        sign_in_button.click()
-        self.log.info("Clicked on 'Sign In'")
+        # Clear name and password fields and click on Sign In button
+        login_helper = LoginHelpers(driver)
+        login_helper.login()
+        self.log.info("Log in with empty name and password fields")
 
         # Verify error message
-        error_message = driver.find_element_by_xpath(".//div[contains(text(),'Invalid username / password')]")
-        assert error_message.text == 'Invalid username / password'
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_INVALID_LOGIN)
         self.log.info("Error message match to expected")
 
-    @pytest.mark.skip()
-    def test_invalid_login(self, driver, log_out):
+    def test_invalid_login(self, driver):
         """
         - Open start page
-        - Clear password and login fields
-        - Fill in fields with invalid values
-        - Click on Sign In button
+        - Fill in login fields with invalid values and click on Sign In button
         - Verify error message
         """
-
         # Open start page
-        driver.get("https://qa-complex-app-for-testing.herokuapp.com")
+        driver.get(BaseConstants.START_PAGE_URL)
         self.log.info("Open page")
 
-        # Clear required fields and fill in
-        username = driver.find_element_by_xpath(".//input[@placeholder='Username']")
-        username.clear()
-        username.send_keys('TestUser')
-        password = driver.find_element_by_xpath(".//input[@placeholder='Password']")
-        password.clear()
-        password.send_keys('~123Abcd')
-        sleep(1)
+        # Fill in username and password fields and click on Sign In button
+        login_helper = LoginHelpers(driver)
+        login_helper.login(username=self.variety.user, password=self.variety.password)
         self.log.info("Fields are filled in with invalid values")
 
-        # Click on Sign In button
-        sign_in_button = driver.find_element_by_xpath(".//button[contains(text(), 'Sign In')]")
-        sign_in_button.click()
-        self.log.info("Clicked on 'Sign In'")
-
         # Verify error message
-        error_message = driver.find_element_by_xpath(".//div[contains(text(),'Invalid username / password')]")
-        assert error_message.text == 'Invalid username / password'
+        login_helper.verify_error_message(text=LoginPageConstants.MSG_INVALID_LOGIN)
         self.log.info("Error message match to expected")
