@@ -5,13 +5,15 @@ class LoginPageConstants:
     SIGN_IN_USERNAME_XPATH = ".//input[@placeholder='Username']"
     SIGN_IN_PASSWORD_XPATH = ".//input[@placeholder='Password']"
     SIGN_IN_BUTTON_TEXT = "Sign In"
-    SIGN_IN_BUTTON_XPATH = f".//button[contaings(text(), '{SIGN_IN_BUTTON_TEXT}')]"
+    SIGN_IN_BUTTON_XPATH = f".//button[contains(text(), '{SIGN_IN_BUTTON_TEXT}')]"
 
     # Sign Up
     SIGN_UP_USERNAME_ID = "username-register"
     SIGN_UP_EMAIL_ID = "email-register"
     SIGN_UP_PASSWORD_ID = "password-register"
+    # SIGN_UP_BUTTON_TEXT = "Sign up for OurApp"
     SIGN_UP_BUTTON_XPATH = ".//*[@id='registration-form']/button"
+    # SIGN_UP_BUTTON_XPATH = f".//button[contains(text(), '{SIGN_UP_BUTTON_TEXT}')]"
 
     # Messages / alerts
     MSG_INVALID_LOGIN = "Invalid username / password"
