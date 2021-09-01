@@ -37,6 +37,8 @@ class LoginHelpers(BaseHelpers):
 
         if element_expected:
             self.wait_until_element_find(locator_type=By.XPATH, locator=ProfilePageConstants.SIGN_OUT_BUTTON_XPATH)
+        else:
+            self.verify_error_message(text=LoginPageConstants.MSG_INVALID_EMAIL_LENGTH)
 
     def verify_sign_up_result(self):
         # Verify register success

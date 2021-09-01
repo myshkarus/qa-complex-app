@@ -206,7 +206,6 @@ class TestLoginPage(BaseTest):
         login_helper.verify_error_message(text=LoginPageConstants.MSG_INVALID_EMAIL)
         self.log.info("Error message match to expected")
 
-    @pytest.mark.skip("Test does not work as expected")
     def test_email_prefix_exceed_max_length(self, driver):
         """
         - Open start page
@@ -231,7 +230,6 @@ class TestLoginPage(BaseTest):
         login_helper.verify_error_message(text=LoginPageConstants.MSG_INVALID_EMAIL_LENGTH)
         self.log.info("Error message match to expected")
 
-    @pytest.mark.skip("Test does not work as expected")
     def test_email_domain_exceed_max_length(self, driver):
         """
         - Open start page
