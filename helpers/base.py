@@ -1,5 +1,8 @@
 import logging
+import random
+import string
 import time
+from collections import namedtuple
 
 import selenium.webdriver.support.expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, WebDriverException
@@ -78,3 +81,21 @@ class BaseHelpers:
         """Find element using XPATH contains function by text"""
         return self.wait_until_element_find(locator_type=By.XPATH,
                                             locator=f".//{element_tag}[contains(text(), '{text}')]")
+
+
+class UserData:
+    """Store user data used for Sign In and Sign Up forms"""
+
+    def __init__(self, name="", email="", password=""):
+        self.name = name
+        self.email = email
+        self.password = password
+
+
+def random_user():
+    """Return namedtuple with random user name, email and password"""
+    RandomUser = namedtuple('RandomUser', ['name', 'email', 'password'])
+    name = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
+    email = f"{name}@domain.com"
+    pwd = f"{name}{random.randint(0, 1000)}"
+    return RandomUser(name, email, pwd)

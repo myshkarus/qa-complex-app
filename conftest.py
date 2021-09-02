@@ -1,16 +1,12 @@
 import logging
-import random
-import string
-from collections import namedtuple
 
+import pytest
+from selenium import webdriver
 
-def random_user():
-    """Return namedtuple with random user name, email and password"""
-    RandomUser = namedtuple('RandomUser', ['user', 'email', 'password'])
-    user = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
-    email = f"{user}@domain.com"
-    pwd = f"{user}{random.randint(0, 1000)}"
-    return RandomUser(user, email, pwd)
+from constants.base import BaseConstants
+from helpers.base import UserData, random_user
+from pages.login_page import LoginPage
+from pages.profile_page import ProfilePage
 
 
 def pytest_runtest_setup(item):
@@ -21,3 +17,29 @@ def pytest_runtest_setup(item):
 class BaseTest:
     log = logging.getLogger(__name__)
     variety = random_user()
+
+
+@pytest.fixture(scope='class')
+def driver():
+    driver = webdriver.Chrome(executable_path=BaseConstants.DRIVER_PATH)
+    yield driver
+    driver.close()
+
+
+@pytest.fixture(scope='function')
+def start_page(driver):
+    driver.get(BaseConstants.START_PAGE_URL)
+    return LoginPage(driver)
+
+
+@pytest.fixture(scope='function')
+def logout(driver):
+    """Log out the user"""
+    yield
+    ProfilePage(driver).logout()
+
+
+@pytest.fixture(scope='function')
+def user():
+    new_user = random_user()
+    return UserData(name=new_user.name, email=new_user.email, password=new_user.password)
